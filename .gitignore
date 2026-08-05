@@ -1,0 +1,14 @@
+# Deployment state -- contains the database master password.
+.workshop-config
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Local tooling
+.env
+.DS_Store
+*.log

@@ -1,0 +1,32 @@
+# Example .workshop-config -- deploy.sh writes the real one (mode 600).
+# Copy to .workshop-config only if you deployed the stacks by hand.
+
+PROJECT_NAME="resilience-workshop"
+ACCOUNT_ID="123456789012"
+
+PRIMARY_STACK="resilience-workshop-primary"
+PRIMARY_REGION="us-east-1"
+PRIMARY_ALB_DNS="resilience-workshop-primary-alb-123456789.us-east-1.elb.amazonaws.com"
+PRIMARY_ALB_URL="http://resilience-workshop-primary-alb-123456789.us-east-1.elb.amazonaws.com"
+PRIMARY_ALB_SG="sg-0123456789abcdef0"
+PRIMARY_RDS_ARN="arn:aws:rds:us-east-1:123456789012:db:resilience-workshop-primary-db"
+PRIMARY_RDS_ENDPOINT="resilience-workshop-primary-db.abcdefghijkl.us-east-1.rds.amazonaws.com"
+
+SECONDARY_STACK="resilience-workshop-secondary"
+SECONDARY_REGION="us-west-2"
+SECONDARY_ALB_DNS="resilience-workshop-secondary-alb-987654321.us-west-2.elb.amazonaws.com"
+SECONDARY_ALB_URL="http://resilience-workshop-secondary-alb-987654321.us-west-2.elb.amazonaws.com"
+SECONDARY_ALB_SG="sg-0fedcba9876543210"
+SECONDARY_RDS_ENDPOINT="resilience-workshop-secondary-replica.mnopqrstuvwx.us-west-2.rds.amazonaws.com"
+
+DB_NAME="workshop"
+DB_USERNAME="admin"
+DB_PASSWORD="replace-me"
+
+# Add these during the workshop so cleanup.sh can remove them.
+CLOUDFRONT_DISTRIBUTION_ID=""
+CLOUDFRONT_URL=""
+ROUTE53_HEALTH_CHECK_IDS=""
+
+DEPLOYED_AT="2026-08-05T12:00:00Z"
+ESTIMATED_HOURLY_COST="0.18"

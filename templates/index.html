@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" data-state="{{ data.state }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Region Status &middot; Resilience Workshop</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9673;</text></svg>">
+<style>
+  :root {
+    --bg:            #0b0f16;
+    --bg-elevated:   #121822;
+    --bg-card:       #141b26;
+    --border:        #232c3b;
+    --border-strong: #2f3b4d;
+    --text:          #e8edf5;
+    --text-muted:    #8b98ad;
+    --text-dim:      #5f6c81;
+    --green:         #29c07a;
+    --blue:          #3d8bfd;
+    --amber:         #f5a524;
+    --red:           #f2554e;
+    --accent:        var(--green);
+    --shadow:        0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+    --radius:        14px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+            Arial, "Noto Sans", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+            "Liberation Mono", monospace;
+  }
+
+  html[data-state="primary"]   { --accent: var(--green); }
+  html[data-state="secondary"] { --accent: var(--blue); }
+  html[data-state="degraded"]  { --accent: var(--red); }
+  html[data-state="local"]     { --accent: #a17ff0; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 50% -280px, rgba(61,139,253,.10), transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 40px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-mark {
+    width: 34px; height: 34px; flex: none; border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), rgba(255,255,255,.12));
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 15px; color: #08111c;
+    transition: background .6s ease;
+  }
+  .brand-text { font-weight: 650; letter-spacing: -.2px; }
+  .brand-sub  { color: var(--text-dim); font-size: 12.5px; font-weight: 500; }
+
+  .refresh-badge {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 14px 7px 11px;
+    font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    box-shadow: var(--shadow);
+  }
+  .refresh-badge .ring {
+    width: 13px; height: 13px; border-radius: 50%; flex: none;
+    border: 2px solid var(--border-strong); border-top-color: var(--accent);
+    animation: spin 1.15s linear infinite;
+  }
+  .refresh-badge.is-loading .ring { animation-duration: .45s; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    border-radius: 20px; padding: 42px 40px;
+    border: 1px solid rgba(255,255,255,.09);
+    box-shadow: var(--shadow);
+    transition: background 700ms ease, border-color 700ms ease;
+    background: linear-gradient(135deg, #1b2433 0%, #141b26 55%, #0d131c 100%);
+  }
+  html[data-state="primary"] .hero {
+    background: linear-gradient(135deg, #0f6b45 0%, #0a4d33 55%, #05301f 100%);
+  }
+  html[data-state="secondary"] .hero {
+    background: linear-gradient(135deg, #123f8f 0%, #0e2f6d 55%, #071b41 100%);
+  }
+  html[data-state="degraded"] .hero {
+    background: linear-gradient(135deg, #8f2318 0%, #a34a0c 52%, #4d1409 100%);
+  }
+  html[data-state="local"] .hero {
+    background: linear-gradient(135deg, #443078 0%, #2e2154 55%, #1a1435 100%);
+  }
+  .hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(760px 260px at 88% -60%, rgba(255,255,255,.16), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-inner { position: relative; z-index: 1; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 12px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase;
+    color: rgba(255,255,255,.72);
+    background: rgba(0,0,0,.24); border: 1px solid rgba(255,255,255,.14);
+    padding: 5px 12px 5px 10px; border-radius: 999px;
+  }
+  .hero h1 {
+    margin: 16px 0 8px;
+    font-size: clamp(34px, 6.2vw, 66px);
+    line-height: 1.02; letter-spacing: -.035em; font-weight: 800;
+    color: #fff; text-shadow: 0 2px 20px rgba(0,0,0,.28);
+  }
+  .hero-sub {
+    margin: 0; font-size: clamp(15px, 1.6vw, 19px);
+    color: rgba(255,255,255,.82); font-weight: 500;
+  }
+  .hero-sub code {
+    font-family: var(--mono); font-size: .94em;
+    background: rgba(0,0,0,.26); padding: 2px 8px; border-radius: 6px;
+  }
+
+  /* pulsing "live" dot */
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%; flex: none;
+    background: #fff; position: relative;
+  }
+  .dot::before {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%;
+    border: 2px solid #fff; opacity: .75;
+    animation: pulse 1.9s cubic-bezier(.24,.6,.35,1) infinite;
+  }
+  @keyframes pulse {
+    0%   { transform: scale(.55); opacity: .8; }
+    70%  { transform: scale(1.7); opacity: 0; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+
+  /* ---------- cards ---------- */
+  .grid {
+    display: grid; gap: 16px; margin-top: 22px;
+    grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+  }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px 20px;
+    box-shadow: var(--shadow);
+    transition: border-color .35s ease, transform .2s ease;
+  }
+  .card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .card-head {
+    display: flex; align-items: center; gap: 9px; margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 11.5px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .card-icon {
+    width: 22px; height: 22px; flex: none; border-radius: 6px;
+    display: grid; place-items: center; font-size: 12px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .card-value {
+    font-family: var(--mono); font-size: 25px; font-weight: 600;
+    letter-spacing: -.02em; color: var(--text);
+    word-break: break-all; line-height: 1.2;
+    transition: color .4s ease;
+  }
+  .card-value.sm { font-size: 20px; }
+  .card-meta { margin-top: 9px; font-size: 13px; color: var(--text-dim); }
+  .card-meta b { color: var(--text-muted); font-weight: 600; }
+
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .kv span:first-child { color: var(--text-dim); }
+  .kv span:last-child  { color: var(--text-muted); font-family: var(--mono); font-size: 12.5px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 650; letter-spacing: .02em;
+    padding: 3px 10px; border-radius: 999px;
+    border: 1px solid transparent; font-family: var(--font);
+  }
+  .pill.ok   { color: #7ee2b3; background: rgba(41,192,122,.12); border-color: rgba(41,192,122,.3); }
+  .pill.info { color: #9cc4ff; background: rgba(61,139,253,.12); border-color: rgba(61,139,253,.3); }
+  .pill.warn { color: #ffd08a; background: rgba(245,165,36,.12); border-color: rgba(245,165,36,.32); }
+  .pill.bad  { color: #ff9d97; background: rgba(242,85,78,.12); border-color: rgba(242,85,78,.32); }
+
+  .text-ok  { color: #7ee2b3; }
+  .text-bad { color: #ff9d97; }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap;
+    font-size: 13px; color: var(--text-dim);
+  }
+  footer .cost { font-family: var(--mono); color: var(--text-muted); }
+  .cleanup {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: #ffcf8f; background: rgba(245,165,36,.08);
+    border: 1px solid rgba(245,165,36,.24); border-radius: 999px;
+    padding: 5px 13px; font-weight: 600;
+    animation: nudge 3.4s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    0%, 88%, 100% { box-shadow: 0 0 0 0 rgba(245,165,36,0); }
+    92%           { box-shadow: 0 0 0 5px rgba(245,165,36,.14); }
+  }
+
+  .fade { animation: fade .45s ease; }
+  @keyframes fade { from { opacity: .35; } to { opacity: 1; } }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 18px 14px 30px; }
+    .hero { padding: 30px 22px; border-radius: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div>
+        <div class="brand-text">Multi-Region Resilience</div>
+        <div class="brand-sub">AWS failover workshop &middot; live status</div>
+      </div>
+    </div>
+    <div class="refresh-badge" id="refresh-badge">
+      <span class="ring"></span>
+      <span id="countdown">Refreshing in 5s&hellip;</span>
+    </div>
+  </div>
+
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+      <span class="hero-eyebrow"><span class="dot"></span> Serving traffic</span>
+      <h1 id="state-label">{{ data.state_label }}</h1>
+      <p class="hero-sub">
+        Request served from <code id="hero-region">{{ data.region }}</code>
+        &middot; <code id="hero-az">{{ data.az }}</code>
+        <span id="hero-note"></span>
+      </p>
+    </div>
+  </section>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#9673;</span> Region</div>
+      <div class="card-value" id="c-region">{{ data.region }}</div>
+      <div class="card-meta">
+        Primary is <b id="c-primary-region">{{ data.primary_region }}</b>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#9707;</span> Availability Zone</div>
+      <div class="card-value" id="c-az">{{ data.az }}</div>
+      <div class="card-meta" id="c-instance-type">{{ data.instance_type }}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#9636;</span> Instance ID</div>
+      <div class="card-value sm" id="c-instance">{{ data.instance_id }}</div>
+      <div class="card-meta" id="c-metadata-note"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#9707;</span> Database</div>
+      <div class="card-value sm" id="c-db">
+        <span class="pill" id="c-db-pill">&hellip;</span>
+      </div>
+      <div class="card-meta" style="margin-top:12px">
+        <div class="kv"><span>Engine</span><span id="c-db-engine">&mdash;</span></div>
+        <div class="kv"><span>Round trip</span><span id="c-db-latency">&mdash;</span></div>
+        <div class="kv"><span>Mode</span><span id="c-db-mode">&mdash;</span></div>
+        <div class="kv"><span>Endpoint</span><span id="c-db-host">&mdash;</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#8635;</span> Uptime</div>
+      <div class="card-value" id="c-uptime">{{ data.uptime_human }}</div>
+      <div class="card-meta">Serving since <b id="c-started">{{ data.started_at }}</b></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="card-icon">&#9889;</span> Last Failover</div>
+      <div class="card-value sm" id="c-failover">None detected</div>
+      <div class="card-meta" id="c-failover-note">
+        Watching for region and database role changes
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span>Workshop by <b style="color:var(--text-muted)">{{ data.author }}</b></span>
+    <span class="cost">Est. running cost: <b id="f-cost">{{ data.hourly_cost }}</b></span>
+    <span class="cleanup">&#9888; Remember to clean up! <code>./scripts/cleanup.sh</code></span>
+  </footer>
+
+</div>
+
+<script id="bootstrap" type="application/json">{{ data | tojson }}</script>
+{% raw %}
+<script>
+(function () {
+  "use strict";
+
+  var REFRESH_SECONDS = 5;
+  var remaining = REFRESH_SECONDS;
+  var timer = null;
+
+  var el = function (id) { return document.getElementById(id); };
+  var setText = function (id, value) {
+    var node = el(id);
+    if (node && node.textContent !== String(value)) {
+      node.textContent = value;
+      node.classList.remove("fade");
+      void node.offsetWidth;   // restart the animation
+      node.classList.add("fade");
+    }
+  };
+
+  function fmtLatency(ms) {
+    if (ms === null || ms === undefined) { return "—"; }
+    return ms < 1 ? "<1 ms" : ms.toFixed(1) + " ms";
+  }
+
+  function fmtFailover(iso) {
+    if (!iso) { return "None detected"; }
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) { return iso; }
+    return d.toLocaleTimeString([], { hour12: false }) + " · " +
+           d.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+
+  function render(data) {
+    document.documentElement.setAttribute("data-state", data.state);
+
+    setText("state-label", data.state_label);
+    setText("hero-region", data.region);
+    setText("hero-az", data.az);
+    setText("c-region", data.region);
+    setText("c-primary-region", data.primary_region);
+    setText("c-az", data.az);
+    setText("c-instance", data.instance_id);
+    setText("c-instance-type", data.instance_type || "—");
+    setText("c-uptime", data.uptime_human);
+    setText("c-started", data.started_at);
+    setText("f-cost", data.hourly_cost);
+
+    setText("c-metadata-note",
+      data.metadata_available ? "Reported by IMDSv2"
+                              : "Instance metadata unavailable — local mode");
+
+    var note = el("hero-note");
+    if (note) {
+      if (data.state === "degraded") {
+        note.textContent = " · database unreachable";
+      } else if (data.state === "local") {
+        note.textContent = data.db === "connected"
+          ? " · no instance metadata"
+          : " · no instance metadata, database unreachable";
+      } else {
+        note.textContent = "";
+      }
+    }
+
+    // ---- database card ----
+    var pill = el("c-db-pill");
+    var connected = data.db === "connected";
+    pill.className = "pill " + (connected ? "ok" : "bad");
+    pill.textContent = connected ? "Connected" : "Disconnected";
+
+    var engine = data.db_engine || "—";
+    if (data.db_engine_version) { engine += " " + data.db_engine_version; }
+    setText("c-db-engine", engine);
+    setText("c-db-latency", connected ? fmtLatency(data.db_latency_ms) : "—");
+    setText("c-db-host", data.db_host || "—");
+
+    var mode = el("c-db-mode");
+    if (!connected) {
+      mode.textContent = data.db_error ? "error" : "unavailable";
+      mode.className = "text-bad";
+    } else if (data.db_mode === "read-only") {
+      mode.textContent = "Read-Only (replica)";
+      mode.className = "";
+      mode.style.color = "#ffd08a";
+    } else if (data.db_mode === "read-write") {
+      mode.textContent = "Read-Write";
+      mode.className = "text-ok";
+      mode.style.color = "";
+    } else {
+      mode.textContent = "unknown";
+      mode.className = "";
+      mode.style.color = "";
+    }
+
+    // ---- failover card ----
+    setText("c-failover", fmtFailover(data.last_failover));
+    setText("c-failover-note",
+      data.last_failover_event ||
+      "Watching for region and database role changes");
+  }
+
+  function degrade(message) {
+    document.documentElement.setAttribute("data-state", "degraded");
+    setText("state-label", "DEGRADED");
+    var note = el("hero-note");
+    if (note) { note.textContent = " · " + message; }
+    var pill = el("c-db-pill");
+    if (pill) { pill.className = "pill bad"; pill.textContent = "Unreachable"; }
+  }
+
+  function poll() {
+    var badge = el("refresh-badge");
+    badge.classList.add("is-loading");
+    fetch("/api/status", { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) { throw new Error("HTTP " + r.status); }
+        return r.json();
+      })
+      .then(render)
+      .catch(function (err) { degrade("cannot reach the application (" + err.message + ")"); })
+      .then(function () {
+        badge.classList.remove("is-loading");
+        remaining = REFRESH_SECONDS;
+      });
+  }
+
+  function tick() {
+    remaining -= 1;
+    if (remaining <= 0) {
+      setText("countdown", "Refreshing now…");
+      poll();
+    } else {
+      setText("countdown", "Refreshing in " + remaining + "s…");
+    }
+  }
+
+  // Bootstrap from the server-rendered payload, then poll.
+  try {
+    render(JSON.parse(el("bootstrap").textContent));
+  } catch (e) {
+    poll();
+  }
+
+  timer = setInterval(tick, 1000);
+  setText("countdown", "Refreshing in " + remaining + "s…");
+
+  // Pause polling while the tab is hidden; refresh immediately on return.
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) {
+      clearInterval(timer);
+      timer = null;
+    } else if (timer === null) {
+      poll();
+      timer = setInterval(tick, 1000);
+    }
+  });
+})();
+</script>
+{% endraw %}
+</body>
+</html>
