@@ -9,7 +9,7 @@
 # replica. Writes .workshop-config for chaos.sh and cleanup.sh.
 #
 # Environment overrides:
-#   PROJECT_NAME       (default resilience-workshop, max 19 characters)
+#   PROJECT_NAME       (default resilience-workshop, max 22 characters)
 #   PRIMARY_REGION     (default us-east-1)
 #   SECONDARY_REGION   (default us-west-2)
 #   GIT_REPO_URL       repo the instances clone at boot
@@ -54,10 +54,11 @@ step() { printf "\n%s%s>> %s%s\n" "$BOLD" "$BLUE" "$*" "$RESET"; }
 # --- preconditions ---------------------------------------------------------
 # AWS caps load balancer and target group names at 32 characters. Every such
 # name is "${PROJECT_NAME}${SUFFIX}", and the longest suffix in either template
-# is '-secondary-tg' (13 chars), so PROJECT_NAME has 19 characters to work
-# with. Catching it here turns a 15-minute ROLLBACK_COMPLETE into an instant
-# error -- CloudFormation only rejects the name once it tries to build the ALB.
-MAX_PROJECT_NAME_LEN=19
+# is the secondary load balancer's '-secondary' (10 chars), so PROJECT_NAME has
+# 22 characters to work with. Catching it here turns a 15-minute
+# ROLLBACK_COMPLETE into an instant error -- CloudFormation only rejects the
+# name once it tries to build the ALB.
+MAX_PROJECT_NAME_LEN=22
 case "$PROJECT_NAME" in
   *[!a-z0-9-]*|"") die "PROJECT_NAME '${PROJECT_NAME}' is invalid.
   Use lowercase letters, digits and hyphens only." ;;
@@ -66,8 +67,8 @@ case "$PROJECT_NAME" in
 esac
 if [ "${#PROJECT_NAME}" -gt "$MAX_PROJECT_NAME_LEN" ]; then
   die "PROJECT_NAME '${PROJECT_NAME}' is ${#PROJECT_NAME} characters -- the maximum is ${MAX_PROJECT_NAME_LEN}.
-  It would produce the target group name '${PROJECT_NAME}-secondary-tg'
-  (${#PROJECT_NAME} + 13 = $(( ${#PROJECT_NAME} + 13 )) chars), and AWS caps load balancer and
+  It would produce the load balancer name '${PROJECT_NAME}-secondary'
+  (${#PROJECT_NAME} + 10 = $(( ${#PROJECT_NAME} + 10 )) chars), and AWS caps load balancer and
   target group names at 32. Shorten it, e.g. PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | cut -c1-${MAX_PROJECT_NAME_LEN})"
 fi
 

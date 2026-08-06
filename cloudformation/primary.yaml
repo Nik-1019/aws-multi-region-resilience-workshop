@@ -20,11 +20,12 @@ Parameters:
     Type: String
     Default: resilience-workshop
     Description: Name prefix applied to every resource.
-    AllowedPattern: '[a-z0-9-]{3,19}'
+    AllowedPattern: '[a-z0-9-]{3,22}'
     ConstraintDescription: >-
-      3-19 lowercase letters, digits or hyphens. Capped at 19 because the
-      longest derived name, '<ProjectName>-secondary-tg', must fit the
-      32-character limit AWS puts on load balancer and target group names.
+      3-22 lowercase letters, digits or hyphens. Capped at 22 because the
+      longest derived name, the '<ProjectName>-secondary' load balancer, must
+      fit the 32-character limit AWS puts on load balancer and target group
+      names.
 
   InstanceType:
     Type: String
@@ -277,7 +278,14 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${ProjectName}-primary-tg'
+      # Target group names share the ALB's 32-char cap. Abbreviated so the
+      # longest name derived from ProjectName is the ALB's '-secondary'
+      # (10 chars) rather than a target group suffix, which buys ProjectName
+      # more room. A target group can only ever be attached to one load
+      # balancer, so this name must change whenever the ALB name does --
+      # otherwise a rename replaces the ALB and listener but not the target
+      # group, and the new listener cannot claim the still-attached old one.
+      Name: !Sub '${ProjectName}-pri-tg'
       VpcId: !Ref VPC
       Port: 80
       Protocol: HTTP

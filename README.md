@@ -191,9 +191,9 @@ Read-only validation. Nothing is created or modified.
 PROJECT_NAME=demo2 ./scripts/preflight.sh      # check a different name prefix
 ```
 
-Checks the AWS CLI and credentials, that `PROJECT_NAME` is 19 characters or
+Checks the AWS CLI and credentials, that `PROJECT_NAME` is 22 characters or
 fewer (AWS caps load balancer and target group names at 32, and the longest
-name derived from it is `<PROJECT_NAME>-secondary-tg`),
+name derived from it is the `<PROJECT_NAME>-secondary` load balancer),
 EC2/CloudFormation/RDS permissions (using a
 dry run), that both regions are enabled, VPC and Elastic IP quota headroom in
 each region, that no stack from a previous run is in the way, and that
