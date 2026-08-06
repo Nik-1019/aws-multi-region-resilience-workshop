@@ -107,7 +107,7 @@ check_credentials() {
   step "checking AWS credentials..."
   local identity
   if ! identity="$(aws sts get-caller-identity --output text \
-                     --query 'Account,Arn' 2>&1)"; then
+                     --query '[Account,Arn]' 2>&1)"; then
     record FAIL "AWS credentials configured" "sts:GetCallerIdentity failed" \
       "Run 'aws configure' or export AWS_PROFILE / AWS_ACCESS_KEY_ID."
     return 1
