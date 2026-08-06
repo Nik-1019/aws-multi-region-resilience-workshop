@@ -10,7 +10,7 @@
 # Environment overrides:
 #   PRIMARY_REGION   (default us-east-1)
 #   SECONDARY_REGION (default us-west-2)
-#   PROJECT_NAME     (default resilience-workshop)
+#   PROJECT_NAME     (default resilience-workshop, max 19 characters)
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -278,6 +278,26 @@ check_eip_quota() {
   fi
 }
 
+check_project_name() {
+  # AWS caps load balancer and target group names at 32 characters. Both
+  # templates derive those names as "${PROJECT_NAME}${SUFFIX}", and the longest
+  # suffix is '-secondary-tg' (13 chars), leaving 19 for PROJECT_NAME itself.
+  local max=19 len=${#PROJECT_NAME}
+  step "checking project name length..."
+  case "$PROJECT_NAME" in
+    -*|*[!a-z0-9-]*|"")
+      record FAIL "Project name is usable" "'$PROJECT_NAME' has invalid characters" \
+        "Use lowercase letters, digits and hyphens, not starting with a hyphen."
+      return ;;
+  esac
+  if [ "$len" -gt "$max" ]; then
+    record FAIL "Project name is usable" "'$PROJECT_NAME' is $len chars (max $max)" \
+      "'${PROJECT_NAME}-secondary-tg' would be $((len + 13)) chars; AWS caps ELB and target group names at 32. Set PROJECT_NAME to $max characters or fewer."
+  else
+    record PASS "Project name is usable" "'$PROJECT_NAME' is $len/$max chars"
+  fi
+}
+
 check_stack_absent() {
   local stack="$1" region="$2" status
   step "checking for an existing $stack stack in $region..."
@@ -373,6 +393,7 @@ main() {
     exit 1
   fi
 
+  check_project_name
   check_permissions
   check_regions
   check_git_repo

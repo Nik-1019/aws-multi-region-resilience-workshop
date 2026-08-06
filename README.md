@@ -191,7 +191,10 @@ Read-only validation. Nothing is created or modified.
 PROJECT_NAME=demo2 ./scripts/preflight.sh      # check a different name prefix
 ```
 
-Checks the AWS CLI and credentials, EC2/CloudFormation/RDS permissions (using a
+Checks the AWS CLI and credentials, that `PROJECT_NAME` is 19 characters or
+fewer (AWS caps load balancer and target group names at 32, and the longest
+name derived from it is `<PROJECT_NAME>-secondary-tg`),
+EC2/CloudFormation/RDS permissions (using a
 dry run), that both regions are enabled, VPC and Elastic IP quota headroom in
 each region, that no stack from a previous run is in the way, and that
 `GIT_REPO_URL` can actually be cloned anonymously. That last check matters most:

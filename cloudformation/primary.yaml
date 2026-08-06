@@ -20,8 +20,11 @@ Parameters:
     Type: String
     Default: resilience-workshop
     Description: Name prefix applied to every resource.
-    AllowedPattern: '[a-z0-9-]{3,32}'
-    ConstraintDescription: 3-32 lowercase letters, digits or hyphens.
+    AllowedPattern: '[a-z0-9-]{3,19}'
+    ConstraintDescription: >-
+      3-19 lowercase letters, digits or hyphens. Capped at 19 because the
+      longest derived name, '<ProjectName>-secondary-tg', must fit the
+      32-character limit AWS puts on load balancer and target group names.
 
   InstanceType:
     Type: String
@@ -258,7 +261,10 @@ Resources:
   ALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Sub '${ProjectName}-primary-alb'
+      # ELBv2 load balancer names are capped at 32 characters, so this name
+      # carries no '-alb' suffix -- the resource type already says what it is.
+      # The 32-char budget is enforced on ProjectName below.
+      Name: !Sub '${ProjectName}-primary'
       Type: application
       Scheme: internet-facing
       SecurityGroups: [!Ref ALBSecurityGroup]
@@ -266,7 +272,7 @@ Resources:
       LoadBalancerAttributes:
         - {Key: idle_timeout.timeout_seconds, Value: '30'}
       Tags:
-        - {Key: Name, Value: !Sub '${ProjectName}-primary-alb'}
+        - {Key: Name, Value: !Sub '${ProjectName}-primary'}
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
